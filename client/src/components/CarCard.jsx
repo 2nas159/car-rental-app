@@ -21,7 +21,7 @@ const CarCard = ({ car }) => {
           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
         />
 
-        {car.isAvalible && (
+        {car.isAvaliable && (
           <p className="absolute top-4 left-4 bg-primary/90 text-white text-xs px-2.5 py-1 rounded-full">
             Avalible Now
           </p>
@@ -49,11 +49,11 @@ const CarCard = ({ car }) => {
 
         <div className="mt-4 grid grid-cols-2 gap-y-2 text-gray-600">
           <div className="flex items-center text-sm text-muted-foreground">
-            <img src={assets.fuel_icon} alt="" className="h-4 pr-2" />
+            <img src={assets.users_icon} alt="fuel" className="h-4 pr-2" />
             <span>{car.setting_capacity} Seats</span>
           </div>
           <div className="flex items-center text-sm text-muted-foreground">
-            <img src={assets.users_icon} alt="" className="h-4 pr-2" />
+            <img src={assets.fuel_icon} alt="fuel" className="h-4 pr-2" />
             <span>{car.fuel_type}</span>
           </div>
           <div className="flex items-center text-sm text-muted-foreground">
