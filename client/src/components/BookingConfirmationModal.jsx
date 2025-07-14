@@ -1,15 +1,24 @@
-import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { assets } from '../assets/assets';
-import PaymentForm from './PaymentForm';
+import React, { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { assets } from "../assets/assets";
+import PaymentForm from "./PaymentForm";
 
-const BookingConfirmationModal = ({ isOpen, onClose, booking, onConfirm, loading }) => {
+const BookingConfirmationModal = ({
+  isOpen,
+  onClose,
+  booking,
+  onConfirm,
+  loading,
+}) => {
   const [showPayment, setShowPayment] = useState(false);
-  
+
   if (!isOpen || !booking) return null;
 
   const currency = import.meta.env.VITE_CURRENCY || "$";
-  const days = Math.ceil((new Date(booking.returnDate) - new Date(booking.pickupDate)) / (1000 * 60 * 60 * 24));
+  const days = Math.ceil(
+    (new Date(booking.returnDate) - new Date(booking.pickupDate)) /
+      (1000 * 60 * 60 * 24)
+  );
 
   const handlePaymentSuccess = () => {
     setShowPayment(false);
@@ -84,12 +93,18 @@ const BookingConfirmationModal = ({ isOpen, onClose, booking, onConfirm, loading
             </div>
             <div className="flex justify-between items-center">
               <span className="text-gray-600">Price per day:</span>
-              <span className="font-medium">{currency}{booking.car.pricePerDay}</span>
+              <span className="font-medium">
+                {currency}
+                {booking.car.pricePerDay}
+              </span>
             </div>
             <hr className="border-gray-200" />
             <div className="flex justify-between items-center text-lg font-bold text-primary">
               <span>Total Price:</span>
-              <span>{currency}{booking.price}</span>
+              <span>
+                {currency}
+                {booking.price}
+              </span>
             </div>
           </div>
 
@@ -113,7 +128,7 @@ const BookingConfirmationModal = ({ isOpen, onClose, booking, onConfirm, loading
                   Processing...
                 </div>
               ) : (
-                'Proceed to Payment'
+                "Proceed to Payment"
               )}
             </button>
           </div>
@@ -147,7 +162,11 @@ const BookingConfirmationModal = ({ isOpen, onClose, booking, onConfirm, loading
                   onClick={handlePaymentCancel}
                   className="text-gray-400 hover:text-gray-600 transition-colors"
                 >
-                  <img src={assets.close_icon} alt="Close" className="w-5 h-5" />
+                  <img
+                    src={assets.close_icon}
+                    alt="Close"
+                    className="w-5 h-5"
+                  />
                 </button>
               </div>
 
@@ -161,10 +180,7 @@ const BookingConfirmationModal = ({ isOpen, onClose, booking, onConfirm, loading
         </AnimatePresence>
       )}
     </AnimatePresence>
-        </motion.div>
-      </motion.div>
-    </AnimatePresence>
   );
 };
 
-export default BookingConfirmationModal; 
+export default BookingConfirmationModal;
