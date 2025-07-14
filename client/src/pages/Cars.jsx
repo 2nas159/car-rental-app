@@ -1,10 +1,40 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Title from "../components/Title";
-import { assets, dummyCarData } from "../assets/assets";
+import { assets } from "../assets/assets";
 import CarCard from "../components/CarCard";
+import api from "../utils/api";
+import toast from "react-hot-toast";
 
 const Cars = () => {
   const [input, setInput] = useState("");
+  const [cars, setCars] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchCars = async () => {
+      try {
+        const response = await api.get("/cars");
+        // Handle both array and object response formats
+        const carsData = Array.isArray(response) ? response : (response.data || response);
+        setCars(carsData);
+      } catch (error) {
+        toast.error("Failed to load cars");
+        console.error("Error fetching cars:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCars();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -35,11 +65,11 @@ const Cars = () => {
 
       <div className="px-6 md:px-16 lg:px-24 xl:px-32 mt-10">
         <p className="text-gray-500 xl:px-20 max-w-7xl mx-auto">
-          Showing {dummyCarData.length} Cars
+          Showing {cars.length} Cars
         </p>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 mt-4 xl:px-20 max-w-7xl mx-auto">
-          {dummyCarData.map((car, index) => (
+          {cars.map((car, index) => (
             <div key={index}>
               <CarCard car={car} />
             </div>

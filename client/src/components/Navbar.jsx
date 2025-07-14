@@ -1,11 +1,13 @@
 import React, { useState } from "react";
 import { assets, menuLinks } from "../assets/assets";
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useUser } from "../context/UserContext";
 
 const Navbar = ({ setShowLogin }) => {
   const location = useLocation();
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
+  const { user, logout } = useUser();
 
   return (
     <div
@@ -41,12 +43,24 @@ const Navbar = ({ setShowLogin }) => {
           <button onClick={() => navigate("/owner")} className="cursor-pointer">
             Dashboard
           </button>
-          <button
-            onClick={() => setShowLogin(true)}
-            className="cursor-pointer px-8 py-2 bg-primary hover:bg-primary-dull transition-all text-white rounded-lg"
-          >
-            Login
-          </button>
+          {user ? (
+            <>
+              <span className="font-semibold text-indigo-600">{user.name}</span>
+              <button
+                onClick={logout}
+                className="cursor-pointer px-6 py-2 bg-gray-200 hover:bg-gray-300 transition-all text-gray-700 rounded-lg"
+              >
+                Logout
+              </button>
+            </>
+          ) : (
+            <button
+              onClick={() => setShowLogin(true)}
+              className="cursor-pointer px-8 py-2 bg-primary hover:bg-primary-dull transition-all text-white rounded-lg"
+            >
+              Login
+            </button>
+          )}
         </div>
       </div>
 

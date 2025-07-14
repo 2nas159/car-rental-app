@@ -1,16 +1,27 @@
 import React, { useEffect, useState } from "react";
-import { assets, dummyMyBookingsData } from "../assets/assets";
+import { assets } from "../assets/assets";
 import Title from "../components/Title";
+import api from "../utils/api";
+import toast from "react-hot-toast";
 
 const MyBookings = () => {
+  const currency = import.meta.env.VITE_CURRENCY;
   const [bookings, setBookings] = useState([]);
 
-  const fetchmyBoookings = async () => {
-    setBookings(dummyMyBookingsData);
+  const fetchMyBookings = async () => {
+          try {
+        const response = await api.get("/bookings/my-bookings");
+        // Handle both array and object response formats
+        const bookingsData = Array.isArray(response) ? response : (response.data || response);
+        setBookings(bookingsData);
+      } catch (error) {
+      toast.error("Failed to load bookings");
+      console.error("Error fetching bookings:", error);
+    }
   };
 
   useEffect(() => {
-    fetchmyBoookings();
+    fetchMyBookings();
   }, []);
 
   return (
@@ -64,11 +75,38 @@ const MyBookings = () => {
               </div>
 
               <div className="flex items-start gap-2 mt-3">
-                <img src={assets.calendar_icon_colored} alt="calendar" />
+                <img
+                  src={assets.calendar_icon_colored}
+                  className="w-4 h-4 mt-1"
+                  alt="calendar"
+                />
                 <div>
                   <p className="text-gray-500">Rental Period</p>
-                  <p>{booking.pickupDate.split('T')[0]}</p>
+                  <p>{booking.pickupDate.split("T")[0]}</p>
                 </div>
+              </div>
+
+              <div className="flex items-start gap-2 mt-3">
+                <img
+                  src={assets.location_icon_colored}
+                  className="w-4 h-4 mt-1"
+                  alt="calendar"
+                />
+                <div>
+                  <p className="text-gray-500">Pick-up Location</p>
+                  <p>{booking.car.location}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Price */}
+            <div className="md:col-span-1 flex flex-col justify-between gap-6">
+              <div>
+                <p>Total Price</p>
+                <h1 className="text-2xl font-semibold text-primary">
+                  {currency} {booking.car.pricePerDay}
+                </h1>
+                <p>Booked on {booking.createdAt.split("T")[0]}</p>
               </div>
             </div>
           </div>

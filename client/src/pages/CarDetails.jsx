@@ -1,24 +1,111 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useContext } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { assets, dummyCarData } from "../assets/assets";
+import { assets } from "../assets/assets";
 import Loader from "../components/Loader";
+import api from "../utils/api";
+import toast from "react-hot-toast";
+import { useUser } from "../context/UserContext";
+import BookingConfirmationModal from "../components/BookingConfirmationModal";
 
 const CarDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user } = useUser();
   const [car, setCar] = useState();
+  const [pickupDate, setPickupDate] = useState("");
+  const [returnDate, setReturnDate] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [showConfirmation, setShowConfirmation] = useState(false);
+  const [bookingData, setBookingData] = useState(null);
   const currency = import.meta.env.VITE_CURRENCY;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    if (!user) {
+      toast.error("Please login to book a car");
+      return;
+    }
+
+    if (!pickupDate || !returnDate) {
+      toast.error("Please select pickup and return dates");
+      return;
+    }
+
+    const pickup = new Date(pickupDate);
+    const return_d = new Date(returnDate);
+    const today = new Date();
+
+    if (pickup < today) {
+      toast.error("Pickup date cannot be in the past");
+      return;
+    }
+
+    if (return_d <= pickup) {
+      toast.error("Return date must be after pickup date");
+      return;
+    }
+
+    const days = Math.ceil((return_d - pickup) / (1000 * 60 * 60 * 24));
+    const totalPrice = days * car.pricePerDay;
+
+    const booking = {
+      car: car,
+      pickupDate: pickup.toISOString(),
+      returnDate: return_d.toISOString(),
+      price: totalPrice
+    };
+
+    setBookingData(booking);
+    setShowConfirmation(true);
+  };
+
+  const handleConfirmBooking = async () => {
+    setLoading(true);
+    try {
+      const bookingPayload = {
+        car: car._id,
+        pickupDate: bookingData.pickupDate,
+        returnDate: bookingData.returnDate,
+        price: bookingData.price
+      };
+
+      const response = await api.post("/bookings", bookingPayload);
+      const createdBooking = response;
+      
+      // Update bookingData with the created booking (including _id)
+      setBookingData(createdBooking);
+      
+      // Don't close modal yet - payment will handle the rest
+      setLoading(false);
+    } catch (error) {
+      toast.error(error.message || "Failed to create booking");
+      console.error("Error creating booking:", error);
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
-    setCar(dummyCarData.find((car) => car._id === id));
+    const fetchCar = async () => {
+      try {
+        const response = await api.get(`/cars/${id}`);
+        // Handle both array and object response formats
+        const carData = Array.isArray(response) ? response[0] : (response.data || response);
+        setCar(carData);
+      } catch (error) {
+        toast.error("Failed to load car details");
+        console.error("Error fetching car:", error);
+      }
+    };
+
+    if (id) {
+      fetchCar();
+    }
   }, [id]);
 
   return car ? (
-    <div className="px-6 md:px-16 lg:px-24 xl:px-32 mt-16 mb-16">
+    <>
+      <div className="px-6 md:px-16 lg:px-24 xl:px-32 mt-16 mb-16">
       <button
         onClick={() => navigate(-1)}
         className="flex items-center gap-2 mb-6 text-gray-500 cursor-pointer"
@@ -112,29 +199,71 @@ const CarDetails = () => {
               className="border border-borderColor px-3 py-2 rounded-lg"
               required
               id="pickup-date"
+              value={pickupDate}
+              onChange={(e) => setPickupDate(e.target.value)}
               min={new Date().toISOString().split("T")[0]}
             />
           </div>
           <div className="flex flex-col gap-2">
-            <label htmlFor="pickup-date">Return Date</label>
+            <label htmlFor="return-date">Return Date</label>
             <input
               type="date"
               className="border border-borderColor px-3 py-2 rounded-lg"
               required
               id="return-date"
+              value={returnDate}
+              onChange={(e) => setReturnDate(e.target.value)}
+              min={pickupDate || new Date().toISOString().split("T")[0]}
             />
           </div>
 
-          <button className="w-full bg-primary hover:bg-primary-dull transition-all py-3 font-medium text-white rounded-xl cursor-pointer">
-            Book Now
+          {/* Total Price Calculation */}
+          {pickupDate && returnDate && (
+            <div className="bg-gray-50 p-4 rounded-lg">
+              <div className="flex justify-between items-center mb-2">
+                <span>Duration:</span>
+                <span className="font-semibold">
+                  {Math.ceil((new Date(returnDate) - new Date(pickupDate)) / (1000 * 60 * 60 * 24))} days
+                </span>
+              </div>
+              <div className="flex justify-between items-center text-lg font-bold text-primary">
+                <span>Total Price:</span>
+                <span>
+                  {currency}
+                  {Math.ceil((new Date(returnDate) - new Date(pickupDate)) / (1000 * 60 * 60 * 24)) * car.pricePerDay}
+                </span>
+              </div>
+            </div>
+          )}
+
+          <button 
+            type="submit"
+            disabled={loading || !user}
+            className={`w-full py-3 font-medium text-white rounded-xl cursor-pointer transition-all ${
+              loading || !user 
+                ? 'bg-gray-400 cursor-not-allowed' 
+                : 'bg-primary hover:bg-primary-dull'
+            }`}
+          >
+            {loading ? "Creating Booking..." : !user ? "Login to Book" : "Book Now"}
           </button>
 
           <p className="text-center text-sm">
-            No credit card required to reserve
+            {!user ? "Please login to book this car" : "No credit card required to reserve"}
           </p>
         </form>
       </div>
     </div>
+
+      {/* Booking Confirmation Modal */}
+      <BookingConfirmationModal
+        isOpen={showConfirmation}
+        onClose={() => setShowConfirmation(false)}
+        booking={bookingData}
+        onConfirm={handleConfirmBooking}
+        loading={loading}
+      />
+    </>
   ) : (
     <Loader />
   );

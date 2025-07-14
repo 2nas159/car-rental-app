@@ -1,0 +1,68 @@
+# Node.js
+node_modules/
+.env
+.env.*
+logs/
+*.log
+debug.log
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Dependency directories
+client/node_modules/
+
+# Build output
+client/dist/
+build/
+
+# Vercel/Netlify/Deployment
+.vercel/
+.netlify/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+*.sublime-workspace
+*.sublime-project
+
+# Misc
+*.local
+*.env.local
+*.env.development.local
+*.env.test.local
+*.env.production.local
+
+# Test coverage
+coverage/
+
+# Optional npm cache directory
+.npm
+
+# MongoDB
+*.mongodb
+*.mongo
+
+# Logs
+npm-debug.log*
+
+# Others
+*.tgz
+
+# Ignore seed and dump files
+seed-data.json
+seed.js
+dump/
+
+# Ignore build artifacts
+*.out
+*.tsbuildinfo
+
+# Ignore lock files except package-lock.json
+# (uncomment if you want to ignore yarn or pnpm lock files)
+# yarn.lock
+# pnpm-lock.yaml
