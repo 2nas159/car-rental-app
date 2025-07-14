@@ -34,9 +34,9 @@ const CarCard = ({ car }) => {
           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
         />
 
-        {car.isAvaliable && (
+        {car.isAvailable && (
           <p className="absolute top-4 left-4 bg-primary/90 text-white text-xs px-2.5 py-1 rounded-full">
-            Avalible Now
+            Available Now
           </p>
         )}
         <div className="absolute bottom-4 right-4 bg-black/80 backdrop-blur-sm text-white px-3 py-2 rounded-lg">
@@ -83,16 +83,16 @@ const CarCard = ({ car }) => {
         <div className="mt-4 pt-4 border-t border-gray-200">
           <button
             onClick={handleBookNow}
-            disabled={!car.isAvaliable}
+            disabled={!car.isAvailable}
             className={`w-full py-2 px-4 rounded-lg font-medium transition-all ${
-              !car.isAvaliable
+              !car.isAvailable
                 ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
                 : user
                 ? 'bg-primary text-white hover:bg-primary-dull'
                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
             }`}
           >
-            {!car.isAvaliable ? 'Not Available' : user ? 'Book Now' : 'Login to Book'}
+            {!car.isAvailable ? 'Not Available' : user ? 'Book Now' : 'Login to Book'}
           </button>
         </div>
       </div>

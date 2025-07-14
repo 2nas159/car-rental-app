@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
-import { assets } from '../assets/assets';
 import api from '../utils/api';
 import toast from 'react-hot-toast';
 
