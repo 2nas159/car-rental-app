@@ -1,6 +1,6 @@
 import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { api } from "../api";
+import api from "../utils/api";
 import toast from "react-hot-toast";
 import { useState } from "react";
 import { useUser } from "../context/UserContext";
@@ -159,10 +159,10 @@ const Login = ({ setShowLogin }) => {
                 {success
                   ? "Success!"
                   : loading
-                    ? "Loading..."
-                    : isLogin
-                      ? "Login"
-                      : "Create Account"}
+                  ? "Loading..."
+                  : isLogin
+                  ? "Login"
+                  : "Create Account"}
               </button>
             </motion.form>
           </AnimatePresence>
