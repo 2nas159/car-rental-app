@@ -5,7 +5,7 @@ const User = require("../models/User");
 const router = express.Router();
 
 const rateLimit = require("express-rate-limit");
-const auth = require('../middleware/auth'); // Make sure this is imported at the top
+const auth = require("../middleware/auth");
 
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
@@ -16,14 +16,23 @@ const loginLimiter = rateLimit({
 // Register
 router.post("/register", async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password, role } = req.body;
     if (!name || !email || !password)
       return res.status(400).json({ error: "All fields required" });
     const existing = await User.findOne({ email });
     if (existing)
       return res.status(400).json({ error: "Email already in use" });
     const hash = await bcrypt.hash(password, 10);
-    const user = new User({ name, email, password: hash });
+    let userRole = "user";
+    if (role === "owner") {
+      userRole = "owner";
+    }
+    const user = new User({
+      name,
+      email,
+      password: hash,
+      role: userRole,
+    });
     await user.save();
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
       expiresIn: "1d",
@@ -70,13 +79,30 @@ router.post("/login", loginLimiter, async (req, res) => {
   }
 });
 
-router.get('/me', auth, async (req, res) => {
+router.get("/me", auth, async (req, res) => {
   try {
-    const user = await User.findById(req.user).select('-password');
-    if (!user) return res.status(404).json({ error: 'User not found' });
+    const user = await User.findById(req.user).select("-password");
+    if (!user) return res.status(404).json({ error: "User not found" });
     res.json({ user });
   } catch (err) {
-    res.status(500).json({ error: 'Server error' });
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+// Update current user's profile (name, image)
+router.put("/me", auth, async (req, res) => {
+  try {
+    const { name, image } = req.body;
+    const user = await User.findById(req.user);
+    if (!user) return res.status(404).json({ error: "User not found" });
+    if (name) user.name = name;
+    if (image) user.image = image;
+    await user.save();
+    const userObj = user.toObject();
+    delete userObj.password;
+    res.json({ user: userObj });
+  } catch (err) {
+    res.status(500).json({ error: "Server error" });
   }
 });
 

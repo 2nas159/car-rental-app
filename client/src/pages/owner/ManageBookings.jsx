@@ -1,23 +1,27 @@
-import React, { useState, useEffect } from 'react';
-import { assets } from '../../assets/assets';
-import Title from '../../components/owner/Title';
-import { motion } from 'framer-motion';
-import toast from 'react-hot-toast';
-import api from '../../utils/api';
+import React, { useState, useEffect } from "react";
+import { assets } from "../../assets/assets";
+import Title from "../../components/owner/Title";
+import { motion } from "framer-motion";
+import toast from "react-hot-toast";
+import api from "../../utils/api";
 
-const ManageBookings = () => {
+const ManageBookings = ({ adminView = false }) => {
   const [bookings, setBookings] = useState([]);
   const [filteredBookings, setFilteredBookings] = useState([]);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedStatus, setSelectedStatus] = useState('all');
-  const [selectedDateRange, setSelectedDateRange] = useState('all');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedStatus, setSelectedStatus] = useState("all");
+  const [selectedDateRange, setSelectedDateRange] = useState("all");
 
   useEffect(() => {
     const fetchBookings = async () => {
       try {
-        const response = await api.get("/bookings/owner-bookings");
+        const response = await api.get(
+          adminView ? "/bookings" : "/bookings/owner-bookings"
+        );
         // Handle both array and object response formats
-        const bookingsData = Array.isArray(response) ? response : (response.data || response);
+        const bookingsData = Array.isArray(response)
+          ? response
+          : response.data || response;
         setBookings(bookingsData);
         setFilteredBookings(bookingsData);
       } catch (error) {
@@ -27,40 +31,43 @@ const ManageBookings = () => {
     };
 
     fetchBookings();
-  }, []);
+  }, [adminView]);
 
   useEffect(() => {
     filterBookings();
   }, [searchTerm, selectedStatus, selectedDateRange, bookings]);
 
   const filterBookings = () => {
-    let filtered = bookings.filter(booking => {
-      const matchesSearch = 
+    let filtered = bookings.filter((booking) => {
+      const matchesSearch =
         booking.car.brand.toLowerCase().includes(searchTerm.toLowerCase()) ||
         booking.car.model.toLowerCase().includes(searchTerm.toLowerCase()) ||
         booking.car.location.toLowerCase().includes(searchTerm.toLowerCase());
-      
-      const matchesStatus = selectedStatus === 'all' || booking.status === selectedStatus;
-      
+
+      const matchesStatus =
+        selectedStatus === "all" || booking.status === selectedStatus;
+
       let matchesDateRange = true;
-      if (selectedDateRange !== 'all') {
+      if (selectedDateRange !== "all") {
         const today = new Date();
         const pickupDate = new Date(booking.pickupDate);
         const returnDate = new Date(booking.returnDate);
-        
+
         switch (selectedDateRange) {
-          case 'today':
-            matchesDateRange = pickupDate.toDateString() === today.toDateString();
+          case "today":
+            matchesDateRange =
+              pickupDate.toDateString() === today.toDateString();
             break;
-          case 'this_week':
+          case "this_week":
             const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
             matchesDateRange = pickupDate >= weekAgo;
             break;
-          case 'this_month':
-            matchesDateRange = pickupDate.getMonth() === today.getMonth() && 
-                              pickupDate.getFullYear() === today.getFullYear();
+          case "this_month":
+            matchesDateRange =
+              pickupDate.getMonth() === today.getMonth() &&
+              pickupDate.getFullYear() === today.getFullYear();
             break;
-          case 'upcoming':
+          case "upcoming":
             matchesDateRange = pickupDate > today;
             break;
           default:
@@ -77,94 +84,113 @@ const ManageBookings = () => {
   const handleStatusUpdate = async (bookingId, newStatus) => {
     try {
       await api.put(`/bookings/${bookingId}`, { status: newStatus });
-      setBookings(prevBookings => 
-        prevBookings.map(booking => 
-          booking._id === bookingId 
+      setBookings((prevBookings) =>
+        prevBookings.map((booking) =>
+          booking._id === bookingId
             ? { ...booking, status: newStatus }
             : booking
         )
       );
-      toast.success('Booking status updated!');
+      toast.success("Booking status updated!");
     } catch (error) {
-      toast.error('Failed to update booking status');
-      console.error('Error updating booking status:', error);
+      toast.error("Failed to update booking status");
+      console.error("Error updating booking status:", error);
     }
   };
 
   const handleDeleteBooking = async (bookingId) => {
-    if (window.confirm('Are you sure you want to delete this booking?')) {
+    if (window.confirm("Are you sure you want to delete this booking?")) {
       try {
         await api.delete(`/bookings/${bookingId}`);
-        setBookings(prevBookings => prevBookings.filter(booking => booking._id !== bookingId));
-        toast.success('Booking deleted!');
+        setBookings((prevBookings) =>
+          prevBookings.filter((booking) => booking._id !== bookingId)
+        );
+        toast.success("Booking deleted!");
       } catch (error) {
-        toast.error('Failed to delete booking');
-        console.error('Error deleting booking:', error);
+        toast.error("Failed to delete booking");
+        console.error("Error deleting booking:", error);
       }
     }
   };
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'confirmed':
-        return 'bg-green-100 text-green-800';
-      case 'pending':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'cancelled':
-        return 'bg-red-100 text-red-800';
-      case 'completed':
-        return 'bg-blue-100 text-blue-800';
+      case "confirmed":
+        return "bg-green-100 text-green-800";
+      case "pending":
+        return "bg-yellow-100 text-yellow-800";
+      case "cancelled":
+        return "bg-red-100 text-red-800";
+      case "completed":
+        return "bg-blue-100 text-blue-800";
       default:
-        return 'bg-gray-100 text-gray-800';
+        return "bg-gray-100 text-gray-800";
     }
   };
 
   const getStatusIcon = (status) => {
     switch (status) {
-      case 'confirmed':
+      case "confirmed":
         return assets.check_icon;
-      case 'pending':
+      case "pending":
         return assets.cautionIconColored;
-      case 'cancelled':
+      case "cancelled":
         return assets.close_icon;
-      case 'completed':
+      case "completed":
         return assets.tick_icon;
       default:
         return assets.listIconColored;
     }
   };
 
-  const statusOptions = ['all', 'pending', 'confirmed', 'completed', 'cancelled'];
+  const statusOptions = [
+    "all",
+    "pending",
+    "confirmed",
+    "completed",
+    "cancelled",
+  ];
   const dateRangeOptions = [
-    { value: 'all', label: 'All Dates' },
-    { value: 'today', label: 'Today' },
-    { value: 'this_week', label: 'This Week' },
-    { value: 'this_month', label: 'This Month' },
-    { value: 'upcoming', label: 'Upcoming' }
+    { value: "all", label: "All Dates" },
+    { value: "today", label: "Today" },
+    { value: "this_week", label: "This Week" },
+    { value: "this_month", label: "This Month" },
+    { value: "upcoming", label: "Upcoming" },
   ];
 
   const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
+    return new Date(dateString).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
     });
   };
 
   const calculateTotalRevenue = () => {
-    return filteredBookings.reduce((total, booking) => total + booking.price, 0);
+    return filteredBookings.reduce(
+      (total, booking) => total + booking.price,
+      0
+    );
   };
 
   // CSV Export Function
   const exportToCSV = () => {
     if (filteredBookings.length === 0) {
-      toast.error('No bookings to export!');
+      toast.error("No bookings to export!");
       return;
     }
     const headers = [
-      'Car Brand', 'Car Model', 'Car Location', 'User ID', 'Pickup Date', 'Return Date', 'Status', 'Price', 'Created At'
+      "Car Brand",
+      "Car Model",
+      "Car Location",
+      "User ID",
+      "Pickup Date",
+      "Return Date",
+      "Status",
+      "Price",
+      "Created At",
     ];
-    const rows = filteredBookings.map(b => [
+    const rows = filteredBookings.map((b) => [
       b.car.brand,
       b.car.model,
       b.car.location,
@@ -173,19 +199,19 @@ const ManageBookings = () => {
       b.returnDate,
       b.status,
       b.price,
-      b.createdAt
+      b.createdAt,
     ]);
-    const csvContent = [headers, ...rows].map(e => e.join(',')).join('\n');
-    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const csvContent = [headers, ...rows].map((e) => e.join(",")).join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
+    const a = document.createElement("a");
     a.href = url;
-    a.download = 'bookings.csv';
+    a.download = "bookings.csv";
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-    toast.success('Bookings exported!');
+    toast.success("Bookings exported!");
   };
 
   return (
@@ -203,9 +229,15 @@ const ManageBookings = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {/* Search */}
           <div className="lg:col-span-2">
-            <label className="block text-sm font-medium text-gray-700 mb-2">Search Bookings</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Search Bookings
+            </label>
             <div className="relative">
-              <img src={assets.search_icon} alt="Search" className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <img
+                src={assets.search_icon}
+                alt="Search"
+                className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400"
+              />
               <input
                 type="text"
                 placeholder="Search by car brand, model, or location..."
@@ -218,15 +250,19 @@ const ManageBookings = () => {
 
           {/* Status Filter */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Status
+            </label>
             <select
               value={selectedStatus}
               onChange={(e) => setSelectedStatus(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
-              {statusOptions.map(status => (
+              {statusOptions.map((status) => (
                 <option key={status} value={status}>
-                  {status === 'all' ? 'All Status' : status.charAt(0).toUpperCase() + status.slice(1)}
+                  {status === "all"
+                    ? "All Status"
+                    : status.charAt(0).toUpperCase() + status.slice(1)}
                 </option>
               ))}
             </select>
@@ -234,13 +270,15 @@ const ManageBookings = () => {
 
           {/* Date Range Filter */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Date Range</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Date Range
+            </label>
             <select
               value={selectedDateRange}
               onChange={(e) => setSelectedDateRange(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
-              {dateRangeOptions.map(option => (
+              {dateRangeOptions.map((option) => (
                 <option key={option.value} value={option.value}>
                   {option.label}
                 </option>
@@ -262,7 +300,10 @@ const ManageBookings = () => {
             Showing {filteredBookings.length} of {bookings.length} bookings
           </p>
           <p className="text-gray-600">
-            Total Revenue: <span className="font-semibold text-green-600">${calculateTotalRevenue()}</span>
+            Total Revenue:{" "}
+            <span className="font-semibold text-green-600">
+              ${calculateTotalRevenue()}
+            </span>
           </p>
         </div>
         <div className="flex gap-2">
@@ -337,7 +378,11 @@ const ManageBookings = () => {
 
                   {/* Customer */}
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">User ID: {booking.user}</div>
+                    <div className="text-sm text-gray-900">
+                      {booking.user?.name ||
+                        booking.user?.email ||
+                        booking.user?._id}
+                    </div>
                     <div className="text-sm text-gray-500">
                       {formatDate(booking.createdAt)}
                     </div>
@@ -363,13 +408,18 @@ const ManageBookings = () => {
                   {/* Status */}
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
-                      <img 
-                        src={getStatusIcon(booking.status)} 
-                        alt={booking.status} 
-                        className="w-4 h-4 mr-2" 
+                      <img
+                        src={getStatusIcon(booking.status)}
+                        alt={booking.status}
+                        className="w-4 h-4 mr-2"
                       />
-                      <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(booking.status)}`}>
-                        {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
+                      <span
+                        className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(
+                          booking.status
+                        )}`}
+                      >
+                        {booking.status.charAt(0).toUpperCase() +
+                          booking.status.slice(1)}
                       </span>
                     </div>
                   </td>
@@ -377,25 +427,31 @@ const ManageBookings = () => {
                   {/* Actions */}
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <div className="flex items-center space-x-2">
-                      {booking.status === 'pending' && (
+                      {booking.status === "pending" && (
                         <>
                           <button
-                            onClick={() => handleStatusUpdate(booking._id, 'confirmed')}
+                            onClick={() =>
+                              handleStatusUpdate(booking._id, "confirmed")
+                            }
                             className="text-green-600 hover:text-green-900 transition-colors"
                           >
                             Confirm
                           </button>
                           <button
-                            onClick={() => handleStatusUpdate(booking._id, 'cancelled')}
+                            onClick={() =>
+                              handleStatusUpdate(booking._id, "cancelled")
+                            }
                             className="text-red-600 hover:text-red-900 transition-colors"
                           >
                             Cancel
                           </button>
                         </>
                       )}
-                      {booking.status === 'confirmed' && (
+                      {booking.status === "confirmed" && (
                         <button
-                          onClick={() => handleStatusUpdate(booking._id, 'completed')}
+                          onClick={() =>
+                            handleStatusUpdate(booking._id, "completed")
+                          }
                           className="text-blue-600 hover:text-blue-900 transition-colors"
                         >
                           Mark Complete
@@ -405,7 +461,11 @@ const ManageBookings = () => {
                         onClick={() => handleDeleteBooking(booking._id)}
                         className="text-gray-600 hover:text-red-600 transition-colors"
                       >
-                        <img src={assets.delete_icon} alt="Delete" className="w-4 h-4" />
+                        <img
+                          src={assets.delete_icon}
+                          alt="Delete"
+                          className="w-4 h-4"
+                        />
                       </button>
                     </div>
                   </td>
@@ -424,12 +484,20 @@ const ManageBookings = () => {
           animate={{ opacity: 1 }}
           transition={{ duration: 0.5 }}
         >
-          <img src={assets.listIconColored} alt="No bookings" className="w-16 h-16 mx-auto mb-4 text-gray-400" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">No bookings found</h3>
+          <img
+            src={assets.listIconColored}
+            alt="No bookings"
+            className="w-16 h-16 mx-auto mb-4 text-gray-400"
+          />
+          <h3 className="text-lg font-medium text-gray-900 mb-2">
+            No bookings found
+          </h3>
           <p className="text-gray-600">
-            {searchTerm || selectedStatus !== 'all' || selectedDateRange !== 'all'
-              ? 'Try adjusting your search or filter criteria.'
-              : 'You haven\'t received any bookings yet.'}
+            {searchTerm ||
+            selectedStatus !== "all" ||
+            selectedDateRange !== "all"
+              ? "Try adjusting your search or filter criteria."
+              : "You haven't received any bookings yet."}
           </p>
         </motion.div>
       )}

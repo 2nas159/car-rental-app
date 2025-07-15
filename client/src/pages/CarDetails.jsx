@@ -6,6 +6,8 @@ import api from "../utils/api";
 import toast from "react-hot-toast";
 import { useUser } from "../context/UserContext";
 import BookingConfirmationModal from "../components/BookingConfirmationModal";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
 
 const CarDetails = () => {
   const { id } = useParams();
@@ -17,6 +19,7 @@ const CarDetails = () => {
   const [loading, setLoading] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [bookingData, setBookingData] = useState(null);
+  const [bookedRanges, setBookedRanges] = useState([]);
   const currency = import.meta.env.VITE_CURRENCY;
 
   const handleSubmit = async (e) => {
@@ -98,8 +101,21 @@ const CarDetails = () => {
       }
     };
 
+    const fetchBookedDates = async () => {
+      try {
+        const res = await api.get(`/bookings/booked-dates/${id}`);
+        setBookedRanges(res.map(b => ({
+          start: new Date(b.pickupDate),
+          end: new Date(b.returnDate)
+        })));
+      } catch (err) {
+        setBookedRanges([]);
+      }
+    };
+
     if (id) {
       fetchCar();
+      fetchBookedDates();
     }
   }, [id]);
 
@@ -194,26 +210,30 @@ const CarDetails = () => {
 
           <div className="flex flex-col gap-2">
             <label htmlFor="pickup-date">Pickup Date</label>
-            <input
-              type="date"
+            <DatePicker
+              selected={pickupDate ? new Date(pickupDate) : null}
+              onChange={date => setPickupDate(date ? date.toISOString().split("T")[0] : "")}
+              excludeDateIntervals={bookedRanges}
+              minDate={new Date()}
+              placeholderText="Select pickup date"
+              dateFormat="yyyy-MM-dd"
               className="border border-borderColor px-3 py-2 rounded-lg"
               required
               id="pickup-date"
-              value={pickupDate}
-              onChange={(e) => setPickupDate(e.target.value)}
-              min={new Date().toISOString().split("T")[0]}
             />
           </div>
           <div className="flex flex-col gap-2">
             <label htmlFor="return-date">Return Date</label>
-            <input
-              type="date"
+            <DatePicker
+              selected={returnDate ? new Date(returnDate) : null}
+              onChange={date => setReturnDate(date ? date.toISOString().split("T")[0] : "")}
+              excludeDateIntervals={bookedRanges}
+              minDate={pickupDate ? new Date(pickupDate) : new Date()}
+              placeholderText="Select return date"
+              dateFormat="yyyy-MM-dd"
               className="border border-borderColor px-3 py-2 rounded-lg"
               required
               id="return-date"
-              value={returnDate}
-              onChange={(e) => setReturnDate(e.target.value)}
-              min={pickupDate || new Date().toISOString().split("T")[0]}
             />
           </div>
 

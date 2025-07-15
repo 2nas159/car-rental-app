@@ -56,6 +56,30 @@ class ApiService {
   async delete(endpoint) {
     return this.request(endpoint, { method: 'DELETE' });
   }
+
+  // New: file upload method for multipart/form-data
+  async upload(endpoint, file, fieldName = 'image') {
+    const url = `${this.baseURL}${endpoint}`;
+    const formData = new FormData();
+    formData.append(fieldName, file);
+    const token = localStorage.getItem('token');
+    const headers = token ? { Authorization: `Bearer ${token}` } : {};
+    const res = await fetch(url, {
+      method: 'POST',
+      headers, // do NOT set Content-Type, browser will set it
+      body: formData,
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      throw new Error(data.error || 'File upload failed');
+    }
+    return res.json();
+  }
+
+  // Update current user's profile (name, image)
+  async updateProfile(data) {
+    return this.put('/auth/me', data);
+  }
 }
 
 const api = new ApiService();

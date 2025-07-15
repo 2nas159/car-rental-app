@@ -4,7 +4,8 @@ const UserSchema = new mongoose.Schema({
   name: { type: String, required: true },
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
-  role: { type: String, default: 'user' }
+  role: { type: String, default: 'user' }, // 'user' or 'owner'
+  image: { type: String }, // profile picture URL
 });
 
 module.exports = mongoose.model('User', UserSchema); 

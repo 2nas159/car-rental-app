@@ -9,6 +9,16 @@ router.get('/', async (req, res) => {
   res.json(cars);
 });
 
+// Get all cars owned by the logged-in user
+router.get('/my-cars', auth, async (req, res) => {
+  try {
+    const cars = await Car.find({ owner: req.user });
+    res.json(cars);
+  } catch (error) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 // Get car by ID
 router.get('/:id', async (req, res) => {
   const car = await Car.findById(req.params.id).populate('owner', 'name email');
@@ -16,8 +26,12 @@ router.get('/:id', async (req, res) => {
   res.json(car);
 });
 
-// Create car (protected)
+// Create car (protected, only owner)
 router.post('/', auth, async (req, res) => {
+  const user = await require('../models/User').findById(req.user);
+  if (!user || user.role !== 'owner') {
+    return res.status(403).json({ error: 'Only owners can add cars' });
+  }
   const car = new Car({ ...req.body, owner: req.user });
   await car.save();
   res.status(201).json(car);

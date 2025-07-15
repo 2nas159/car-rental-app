@@ -3,6 +3,7 @@ import { assets, cityList } from '../../assets/assets';
 import Title from '../../components/owner/Title';
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
+import api from '../../utils/api';
 
 const categories = ['SUV', 'Sedan', 'Hatchback', 'Convertible', 'Truck'];
 const transmissions = ['Automatic', 'Manual', 'Semi-Automatic'];
@@ -10,7 +11,7 @@ const fuelTypes = ['Petrol', 'Diesel', 'Hybrid', 'Electric'];
 
 const AddCar = () => {
   const [form, setForm] = useState({
-    image: null,
+    image: null, // store File object
     brand: '',
     model: '',
     year: '',
@@ -38,7 +39,12 @@ const AddCar = () => {
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleImageUpload = async (file) => {
+    const data = await api.upload('/upload/image', file);
+    return data.url; // Cloudinary URL
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
     // Basic validation
     if (!form.image || !form.brand || !form.model || !form.year || !form.pricePerDay || !form.category || !form.transmission || !form.fuel_type || !form.seating_capacity || !form.location || !form.description) {
@@ -46,9 +52,20 @@ const AddCar = () => {
       return;
     }
     setSubmitting(true);
-    // Simulate API call
-    setTimeout(() => {
+    let imageUrl = '';
+    try {
+      imageUrl = await handleImageUpload(form.image);
+    } catch (err) {
+      toast.error('Image upload failed');
       setSubmitting(false);
+      return;
+    }
+    // Submit car data to backend
+    try {
+      await api.post('/cars', {
+        ...form,
+        image: imageUrl,
+      });
       toast.success('Car listed successfully!');
       setForm({
         image: null,
@@ -64,7 +81,11 @@ const AddCar = () => {
         description: '',
       });
       setImagePreview(null);
-    }, 1200);
+    } catch (err) {
+      toast.error('Failed to add car');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (

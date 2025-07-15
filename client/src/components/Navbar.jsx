@@ -40,12 +40,18 @@ const Navbar = ({ setShowLogin }) => {
         </div>
 
         <div className="flex max-sm:flex-col items-start sm:items-center gap-6">
-          <button onClick={() => navigate("/owner")} className="cursor-pointer">
-            Dashboard
-          </button>
+          {user && user.role === 'owner' && (
+            <button onClick={() => navigate("/owner")} className="cursor-pointer">
+              Dashboard
+            </button>
+          )}
           {user ? (
             <>
-              <span className="font-semibold text-indigo-600">{user.name}</span>
+              <img
+                src={user.image || assets.user_profile}
+                alt="Profile"
+                className="h-8 w-8 rounded-full object-cover border border-gray-300"
+              />
               <button
                 onClick={logout}
                 className="cursor-pointer px-6 py-2 bg-gray-200 hover:bg-gray-300 transition-all text-gray-700 rounded-lg"

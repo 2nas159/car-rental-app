@@ -4,8 +4,10 @@ import Title from "../../components/owner/Title";
 import { motion } from "framer-motion";
 import toast from "react-hot-toast";
 import api from "../../utils/api";
+import { useUser } from "../../context/UserContext";
 
-const Dashboard = () => {
+const Dashboard = ({ adminView = false }) => {
+  const { user } = useUser();
   const [data, setData] = useState({
     totalCars: 0,
     totalBookings: 0,
@@ -37,7 +39,7 @@ const Dashboard = () => {
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
-        const response = await api.get("/bookings/dashboard");
+        const response = await api.get(adminView ? "/bookings/dashboard?admin=true" : "/bookings/dashboard");
         // Handle both array and object response formats
         const dashboardData = Array.isArray(response) ? response[0] : (response.data || response);
         setData(dashboardData);
@@ -49,13 +51,13 @@ const Dashboard = () => {
     };
 
     fetchDashboardData();
-  }, []);
+  }, [adminView]);
 
   return (
     <div className="px-4 pt-10 md:px-10 flex-1">
       <Title
-        title="Admin Dashboard"
-        subTitle="Monitor overall platform performance including total cars, bookings, revenue, and recent activities"
+        title={adminView ? "Admin Dashboard" : "Owner Dashboard"}
+        subTitle={adminView ? "Monitor overall platform performance including total cars, bookings, revenue, and recent activities" : "Your rental business at a glance"}
       />
 
       <motion.div

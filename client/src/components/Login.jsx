@@ -10,6 +10,8 @@ const Login = ({ setShowLogin }) => {
   const [name, setName] = React.useState("");
   const [email, setEmail] = React.useState("");
   const [password, setPassword] = React.useState("");
+  const [role, setRole] = React.useState("user");
+  const [ownerRequestMessage, setOwnerRequestMessage] = React.useState("");
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const { setUser } = useUser();
@@ -19,6 +21,8 @@ const Login = ({ setShowLogin }) => {
     setName("");
     setEmail("");
     setPassword("");
+    setRole("user");
+    setOwnerRequestMessage("");
   }, [isLogin]);
 
   const handleSubmit = async (e) => {
@@ -26,20 +30,24 @@ const Login = ({ setShowLogin }) => {
     setLoading(true);
     try {
       if (isLogin) {
-        const { token, user } = await api("/auth/login", "POST", {
-          email,
-          password,
-        });
+        const { token, user } = await api.post("/auth/login", { email, password });
         localStorage.setItem("token", token);
         setUser(user);
         setSuccess(true);
         toast.success("Logged in!");
         setTimeout(() => setShowLogin(false), 1000);
       } else {
-        const { token, user } = await api("/auth/register", "POST", {
+        if (role === "owner" && !ownerRequestMessage) {
+          toast.error("Please tell us about yourself to register as an owner.");
+          setLoading(false);
+          return;
+        }
+        const { token, user } = await api.post("/auth/register", {
           name,
           email,
           password,
+          role,
+          ownerRequestMessage: role === "owner" ? ownerRequestMessage : undefined,
         });
         localStorage.setItem("token", token);
         setUser(user);
@@ -59,6 +67,8 @@ const Login = ({ setShowLogin }) => {
         toast.error("Incorrect email or password.");
       } else if (err.message.includes("Too many login attempts")) {
         toast.error("Too many login attempts. Please try again later.");
+      } else if (err.message === "Owner message required") {
+        toast.error("Please tell us about yourself to register as an owner.");
       } else {
         toast.error(err.message || "An error occurred. Please try again.");
       }
@@ -96,17 +106,43 @@ const Login = ({ setShowLogin }) => {
                 {isLogin ? "Login" : "Create Account"}
               </p>
               {!isLogin && (
-                <div className="w-full">
-                  <p className="font-medium text-gray-700 mb-1">Name</p>
-                  <input
-                    onChange={(e) => setName(e.target.value)}
-                    value={name}
-                    placeholder="Your name"
-                    className="border border-indigo-200 rounded-lg w-full p-2 mt-1 outline-indigo-500 bg-white/80 focus:ring-2 focus:ring-indigo-300 transition-all"
-                    type="text"
-                    required
-                  />
-                </div>
+                <>
+                  <div className="w-full">
+                    <p className="font-medium text-gray-700 mb-1">Name</p>
+                    <input
+                      onChange={(e) => setName(e.target.value)}
+                      value={name}
+                      placeholder="Your name"
+                      className="border border-indigo-200 rounded-lg w-full p-2 mt-1 outline-indigo-500 bg-white/80 focus:ring-2 focus:ring-indigo-300 transition-all"
+                      type="text"
+                      required
+                    />
+                  </div>
+                  <div className="w-full">
+                    <p className="font-medium text-gray-700 mb-1">Register as</p>
+                    <select
+                      value={role}
+                      onChange={e => setRole(e.target.value)}
+                      className="border border-indigo-200 rounded-lg w-full p-2 mt-1"
+                    >
+                      <option value="user">Regular User</option>
+                      <option value="owner">Car Owner</option>
+                    </select>
+                  </div>
+                  {role === "owner" && (
+                    <div className="w-full">
+                      <p className="font-medium text-gray-700 mb-1">Tell us about yourself</p>
+                      <textarea
+                        value={ownerRequestMessage}
+                        onChange={e => setOwnerRequestMessage(e.target.value)}
+                        className="border border-indigo-200 rounded-lg w-full p-2 mt-1"
+                        rows={3}
+                        required
+                        placeholder="Why do you want to be an owner? Describe yourself and your cars."
+                      />
+                    </div>
+                  )}
+                </>
               )}
               <div className="w-full">
                 <p className="font-medium text-gray-700 mb-1">Email</p>

@@ -6,7 +6,7 @@ import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import api from '../../utils/api';
 
-const ManageCars = () => {
+const ManageCars = ({ adminView = false }) => {
   const navigate = useNavigate();
   const [cars, setCars] = useState([]);
   const [filteredCars, setFilteredCars] = useState([]);
@@ -14,23 +14,51 @@ const ManageCars = () => {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedLocation, setSelectedLocation] = useState('all');
   const [selectedStatus, setSelectedStatus] = useState('all');
+  const [carBookings, setCarBookings] = useState({}); // carId -> next return date or null
 
   useEffect(() => {
     const fetchCars = async () => {
       try {
-        const response = await api.get("/cars/my-cars");
-        // Handle both array and object response formats
+        const response = await api.get(adminView ? "/cars" : "/cars/my-cars");
         const carsData = Array.isArray(response) ? response : (response.data || response);
         setCars(carsData);
         setFilteredCars(carsData);
+        // Fetch bookings for each car
+        fetchAllCarBookings(carsData);
       } catch (error) {
         toast.error("Failed to load cars");
         console.error("Error fetching cars:", error);
       }
     };
-
     fetchCars();
-  }, []);
+  }, [adminView]);
+
+  const fetchAllCarBookings = async (carsList) => {
+    const bookingsMap = {};
+    await Promise.all(
+      carsList.map(async (car) => {
+        try {
+          const bookings = await api.get(`/bookings/booked-dates/${car._id}`);
+          // Find the latest returnDate in the future
+          const now = new Date();
+          const futureBookings = bookings.filter(b => new Date(b.returnDate) >= now);
+          if (futureBookings.length > 0) {
+            // Get the soonest returnDate in the future
+            const nextReturn = futureBookings.reduce((min, b) => {
+              const ret = new Date(b.returnDate);
+              return (!min || ret < min) ? ret : min;
+            }, null);
+            bookingsMap[car._id] = nextReturn;
+          } else {
+            bookingsMap[car._id] = null;
+          }
+        } catch (e) {
+          bookingsMap[car._id] = null;
+        }
+      })
+    );
+    setCarBookings(bookingsMap);
+  };
 
   useEffect(() => {
     filterCars();
@@ -41,39 +69,25 @@ const ManageCars = () => {
       const matchesSearch = car.brand.toLowerCase().includes(searchTerm.toLowerCase()) ||
                            car.model.toLowerCase().includes(searchTerm.toLowerCase()) ||
                            car.location.toLowerCase().includes(searchTerm.toLowerCase());
-      
       const matchesCategory = selectedCategory === 'all' || car.category === selectedCategory;
       const matchesLocation = selectedLocation === 'all' || car.location === selectedLocation;
+      // Status filter uses booking info
+      const isUnavailable = carBookings[car._id] !== null;
       const matchesStatus = selectedStatus === 'all' || 
-                           (selectedStatus === 'available' && car.isAvaliable) ||
-                           (selectedStatus === 'unavailable' && !car.isAvaliable);
-
+                           (selectedStatus === 'available' && !isUnavailable) ||
+                           (selectedStatus === 'unavailable' && isUnavailable);
       return matchesSearch && matchesCategory && matchesLocation && matchesStatus;
     });
-
     setFilteredCars(filtered);
-  };
-
-  const handleStatusToggle = (carId) => {
-    setCars(prevCars => 
-      prevCars.map(car => 
-        car._id === carId 
-          ? { ...car, isAvaliable: !car.isAvaliable }
-          : car
-      )
-    );
-    toast.success('Car status updated!');
-  };
-
-  const handleDeleteCar = (carId) => {
-    if (window.confirm('Are you sure you want to delete this car?')) {
-      setCars(prevCars => prevCars.filter(car => car._id !== carId));
-      toast.success('Car deleted!');
-    }
   };
 
   const categories = ['all', 'SUV', 'Sedan', 'Hatchback', 'Convertible', 'Truck'];
   const statusOptions = ['all', 'available', 'unavailable'];
+
+  const formatDate = (date) => {
+    if (!date) return '';
+    return new Date(date).toLocaleDateString();
+  };
 
   return (
     <div className="px-4 pt-10 md:px-10 flex-1">
@@ -160,12 +174,14 @@ const ManageCars = () => {
         <p className="text-gray-600">
           Showing {filteredCars.length} of {cars.length} cars
         </p>
-        <button
-          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-          onClick={() => navigate('/owner/add-car')}
-        >
-          Add New Car
-        </button>
+        {!adminView && (
+          <button
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+            onClick={() => navigate('/owner/add-car')}
+          >
+            Add New Car
+          </button>
+        )}
       </motion.div>
 
       {/* Cars Grid */}
@@ -178,84 +194,70 @@ const ManageCars = () => {
           visible: { opacity: 1, y: 0, transition: { staggerChildren: 0.08 } },
         }}
       >
-        {filteredCars.map((car, idx) => (
-          <motion.div
-            key={car._id}
-            className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-shadow"
-            whileHover={{ scale: 1.03 }}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.05 * idx, duration: 0.4 }}
-          >
-            {/* Car Image */}
-            <div className="relative h-48 bg-gray-200">
-              <img
-                src={car.image}
-                alt={`${car.brand} ${car.model}`}
-                className="w-full h-full object-cover"
-              />
-              <div className="absolute top-2 right-2">
-                <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                  car.isAvaliable 
-                    ? 'bg-green-100 text-green-800' 
-                    : 'bg-red-100 text-red-800'
-                }`}>
-                  {car.isAvaliable ? 'Available' : 'Unavailable'}
-                </span>
-              </div>
-            </div>
-
-            {/* Car Details */}
-            <div className="p-4">
-              <div className="flex justify-between items-start mb-2">
-                <h3 className="text-lg font-semibold text-gray-900">
-                  {car.brand} {car.model}
-                </h3>
-                <p className="text-lg font-bold text-blue-600">
-                  ${car.pricePerDay}/day
-                </p>
-              </div>
-
-              <div className="space-y-2 mb-4">
-                <div className="flex items-center text-sm text-gray-600">
-                  <img src={assets.location_icon} alt="Location" className="w-4 h-4 mr-2" />
-                  {car.location}
-                </div>
-                <div className="flex items-center text-sm text-gray-600">
-                  <img src={assets.car_icon} alt="Category" className="w-4 h-4 mr-2" />
-                  {car.category} • {car.year}
-                </div>
-                <div className="flex items-center text-sm text-gray-600">
-                  <img src={assets.fuel_icon} alt="Fuel" className="w-4 h-4 mr-2" />
-                  {car.fuel_type} • {car.transmission}
+        {filteredCars.map((car, idx) => {
+          const isUnavailable = carBookings[car._id] !== null;
+          const untilDate = carBookings[car._id];
+          return (
+            <motion.div
+              key={car._id}
+              className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-shadow"
+              whileHover={{ scale: 1.03 }}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.05 * idx, duration: 0.4 }}
+            >
+              {/* Car Image */}
+              <div className="relative h-48 bg-gray-200">
+                <img
+                  src={car.image}
+                  alt={`${car.brand} ${car.model}`}
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute top-2 right-2">
+                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                    isUnavailable
+                      ? 'bg-red-100 text-red-800'
+                      : 'bg-green-100 text-green-800'
+                  }`}>
+                    {isUnavailable
+                      ? `Unavailable until ${formatDate(untilDate)}`
+                      : 'Available'}
+                  </span>
                 </div>
               </div>
 
-              {/* Action Buttons */}
-              <div className="flex space-x-2">
-                <button
-                  onClick={() => handleStatusToggle(car._id)}
-                  className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    car.isAvaliable
-                      ? 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200'
-                      : 'bg-green-100 text-green-800 hover:bg-green-200'
-                  }`}
-                >
-                  {car.isAvaliable ? 'Mark Unavailable' : 'Mark Available'}
-                </button>
-                <button className="p-2 text-gray-600 hover:text-blue-600 transition-colors">
-                  <img src={assets.edit_icon} alt="Edit" className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => handleDeleteCar(car._id)}
-                  className="p-2 text-gray-600 hover:text-red-600 transition-colors"
-                >
-                  <img src={assets.delete_icon} alt="Delete" className="w-4 h-4" />
-                </button>
+              {/* Car Details */}
+              <div className="p-4">
+                <div className="flex justify-between items-start mb-2">
+                  <h3 className="text-lg font-semibold text-gray-900">
+                    {car.brand} {car.model}
+                  </h3>
+                  <p className="text-lg font-bold text-blue-600">
+                    ${car.pricePerDay}/day
+                  </p>
+                </div>
+
+                <div className="space-y-2 mb-4">
+                  <div className="flex items-center text-sm text-gray-600">
+                    <img src={assets.location_icon} alt="Location" className="w-4 h-4 mr-2" />
+                    {car.location}
+                  </div>
+                  <div className="flex items-center text-sm text-gray-600">
+                    <img src={assets.car_icon} alt="Category" className="w-4 h-4 mr-2" />
+                    {car.category} • {car.year}
+                  </div>
+                  <div className="flex items-center text-sm text-gray-600">
+                    <img src={assets.fuel_icon} alt="Fuel" className="w-4 h-4 mr-2" />
+                    {car.fuel_type} • {car.transmission}
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                {/* Removed action buttons: status toggle, edit, delete */}
               </div>
-            </div>
-          </motion.div>
-        ))}
+            </motion.div>
+          );
+        })}
       </motion.div>
 
       {/* Empty State */}
