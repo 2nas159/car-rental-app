@@ -74,28 +74,11 @@ const CarDetails = () => {
   };
 
   const handleConfirmBooking = async () => {
-    setLoading(true);
-    try {
-      const bookingPayload = {
-        car: car._id,
-        pickupDate: bookingData.pickupDate,
-        returnDate: bookingData.returnDate,
-        price: bookingData.price
-      };
-
-      const response = await api.post("/bookings", bookingPayload);
-      console.log('Booking creation response:', response);
-      const createdBooking = response;
-      
-      // Update bookingData with the created booking (including _id)
-      setBookingData(createdBooking);
-      
-      // Don't close modal yet - payment will handle the rest
-      setLoading(false);
-    } catch (error) {
-      toast.error(error.message || "Failed to create booking");
-      console.error("Error creating booking:", error);
-      setLoading(false);
+    // This function should only be used for booking creation, not after payment
+    setShowConfirmation(false); // Close the modal after payment
+    setBookingData(null); // Reset booking data
+    if (typeof window !== 'undefined' && window.toast) {
+      window.toast.success('Booking and payment successful!');
     }
   };
 

@@ -22,7 +22,10 @@ const BookingConfirmationModal = ({
 
   const handlePaymentSuccess = () => {
     setShowPayment(false);
-    onConfirm();
+    onConfirm(); // This should NOT re-create the booking, just close the modal and reset state
+    if (typeof window !== 'undefined' && window.toast) {
+      window.toast.success('Booking and payment successful!');
+    }
   };
 
   const handlePaymentCancel = () => {
