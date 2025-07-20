@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { assets } from "../assets/assets";
 import PaymentForm from "./PaymentForm";
+import { useNavigate } from "react-router-dom";
 
 const BookingConfirmationModal = ({
   isOpen,
@@ -11,6 +12,7 @@ const BookingConfirmationModal = ({
   loading,
 }) => {
   const [showPayment, setShowPayment] = useState(false);
+  const navigate = useNavigate();
 
   if (!isOpen || !booking) return null;
 
@@ -23,9 +25,7 @@ const BookingConfirmationModal = ({
   const handlePaymentSuccess = () => {
     setShowPayment(false);
     onConfirm(); // This should NOT re-create the booking, just close the modal and reset state
-    if (typeof window !== 'undefined' && window.toast) {
-      window.toast.success('Booking and payment successful!');
-    }
+    navigate('/thank-you');
   };
 
   const handlePaymentCancel = () => {

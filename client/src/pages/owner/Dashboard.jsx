@@ -12,7 +12,7 @@ const Dashboard = ({ adminView = false }) => {
     totalCars: 0,
     totalBookings: 0,
     pendingBookings: 0,
-    completedBookings: 0,
+    confirmedBookings: 0,
     recentBookings: [],
     monthlyRevenue: 0,
   });
@@ -30,8 +30,8 @@ const Dashboard = ({ adminView = false }) => {
       icon: assets.cautionIconColored,
     },
     {
-      title: "Completed",
-      value: data.completedBookings,
+      title: "Confirmed",
+      value: data.confirmedBookings,
       icon: assets.listIconColored,
     },
   ];

@@ -12,6 +12,7 @@ import AddCar from "./pages/owner/AddCar";
 import ManageCars from "./pages/owner/ManageCars";
 import ManageBookings from "./pages/owner/ManageBookings";
 import Login from "./components/Login";
+import ThankYou from "./pages/ThankYou";
 
 function App() {
   const [showLogin, setShowLogin] = useState(false);
@@ -26,6 +27,7 @@ function App() {
         <Route path="/car-details/:id" element={<CarDetails />} />
         <Route path="/cars" element={<Cars />} />
         <Route path="/my-bookings" element={<MyBookings />} />
+        <Route path="/thank-you" element={<ThankYou />} />
         {/* Owner dashboard and features only under /owner */}
         <Route path="/owner" element={<Layout />}>
           <Route index element={<Dashboard />} />

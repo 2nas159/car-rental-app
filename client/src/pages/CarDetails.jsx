@@ -64,8 +64,10 @@ const CarDetails = () => {
     try {
       const response = await api.post("/bookings", bookingPayload);
       console.log('Booking creation response:', response);
-      setBookingData(response); // response should have _id
-      setShowConfirmation(true); // Only open modal after booking is created
+      // Fetch the full booking with populated car
+      const fullBooking = await api.get(`/bookings/${response._id}`);
+      setBookingData(fullBooking);
+      setShowConfirmation(true); // Only open modal after booking is created and populated
     } catch (error) {
       toast.error(error.message || "Failed to create booking");
       console.error("Error creating booking:", error);

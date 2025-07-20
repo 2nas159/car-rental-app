@@ -82,7 +82,11 @@ const MyBookings = () => {
                 />
                 <div>
                   <p className="text-gray-500">Rental Period</p>
-                  <p>{booking.pickupDate.split("T")[0]}</p>
+                  <p>
+                    {booking.pickupDate.split("T")[0]} 
+                    &rarr; 
+                    {booking.returnDate ? booking.returnDate.split("T")[0] : "-"}
+                  </p>
                 </div>
               </div>
 
@@ -104,7 +108,12 @@ const MyBookings = () => {
               <div>
                 <p>Total Price</p>
                 <h1 className="text-2xl font-semibold text-primary">
-                  {currency} {booking.car.pricePerDay}
+                  {currency} {(() => {
+                    const start = new Date(booking.pickupDate);
+                    const end = new Date(booking.returnDate);
+                    const days = Math.ceil((end - start) / (1000 * 60 * 60 * 24));
+                    return days * booking.car.pricePerDay;
+                  })()}
                 </h1>
                 <p>Booked on {booking.createdAt.split("T")[0]}</p>
               </div>

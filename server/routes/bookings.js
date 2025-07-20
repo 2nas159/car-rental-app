@@ -44,15 +44,16 @@ router.get("/owner-bookings", auth, async (req, res) => {
 // Get dashboard data for owner
 router.get("/dashboard", auth, async (req, res) => {
   try {
-    const now = new Date();
-    await Booking.updateMany(
-      {
-        owner: req.user,
-        status: "confirmed",
-        returnDate: { $lt: now }
-      },
-      { $set: { status: "completed" } }
-    );
+    // Remove auto-update to completed
+    // const now = new Date();
+    // await Booking.updateMany(
+    //   {
+    //     owner: req.user,
+    //     status: "confirmed",
+    //     returnDate: { $lt: now }
+    //   },
+    //   { $set: { status: "completed" } }
+    // );
 
     const totalCars = await Car.countDocuments({ owner: req.user });
     const totalBookings = await Booking.countDocuments({ owner: req.user });
@@ -60,9 +61,10 @@ router.get("/dashboard", auth, async (req, res) => {
       owner: req.user,
       status: "pending",
     });
-    const completedBookings = await Booking.countDocuments({
+    // Only count confirmed bookings as active
+    const confirmedBookings = await Booking.countDocuments({
       owner: req.user,
-      status: "completed"
+      status: "confirmed"
     });
 
     const recentBookings = await Booking.find({ owner: req.user })
@@ -84,7 +86,7 @@ router.get("/dashboard", auth, async (req, res) => {
       totalCars,
       totalBookings,
       pendingBookings,
-      completedBookings,
+      confirmedBookings,
       recentBookings,
       monthlyRevenue: revenueAgg[0]?.total || 0,
     });
