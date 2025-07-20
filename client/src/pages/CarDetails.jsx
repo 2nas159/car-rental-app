@@ -265,7 +265,7 @@ const CarDetails = () => {
           </button>
 
           <p className="text-center text-sm">
-            {!user ? "Please login to book this car" : "No credit card required to reserve"}
+            {!user ? "Please login to book this car" : ""}
           </p>
         </form>
       </div>

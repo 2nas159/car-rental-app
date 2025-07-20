@@ -44,16 +44,20 @@ router.get("/owner-bookings", auth, async (req, res) => {
 // Get dashboard data for owner
 router.get("/dashboard", auth, async (req, res) => {
   try {
-    // Remove auto-update to completed
-    // const now = new Date();
-    // await Booking.updateMany(
-    //   {
-    //     owner: req.user,
-    //     status: "confirmed",
-    //     returnDate: { $lt: now }
-    //   },
-    //   { $set: { status: "completed" } }
-    // );
+    // Auto-update bookings to 'completed' if their return date is in the past and status is 'confirmed'
+    const now = new Date();
+    await Booking.updateMany(
+      {
+        owner: req.user,
+        status: "confirmed",
+        returnDate: { $lt: now }
+      },
+      { $set: { status: "completed" } }
+    );
+
+    // Log all bookings for this owner to inspect statuses
+    const allBookings = await Booking.find({ owner: req.user });
+    console.log('All bookings for owner:', allBookings.map(b => ({ id: b._id, status: b.status, returnDate: b.returnDate })));
 
     const totalCars = await Car.countDocuments({ owner: req.user });
     const totalBookings = await Booking.countDocuments({ owner: req.user });
@@ -65,6 +69,15 @@ router.get("/dashboard", auth, async (req, res) => {
     const confirmedBookings = await Booking.countDocuments({
       owner: req.user,
       status: "confirmed"
+    });
+    const completedBookings = await Booking.countDocuments({
+      owner: req.user,
+      status: "completed"
+    });
+    // Always calculate cancelledBookings
+    const cancelledBookings = await Booking.countDocuments({
+      owner: req.user,
+      status: "cancelled"
     });
 
     const recentBookings = await Booking.find({ owner: req.user })
@@ -82,13 +95,55 @@ router.get("/dashboard", auth, async (req, res) => {
       { $group: { _id: null, total: { $sum: "$price" } } }
     ]);
 
+    // Calculate monthly revenue (not cancelled) for current month
+    const firstDayOfThisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const firstDayOfNextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+    const firstDayOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+
+    // Current month revenue (exclude cancelled)
+    const monthlyRevenueAgg = await Booking.aggregate([
+      {
+        $match: {
+          owner: new mongoose.Types.ObjectId(req.user),
+          status: { $ne: "cancelled" },
+          paidAt: { $gte: firstDayOfThisMonth, $lt: firstDayOfNextMonth }
+        }
+      },
+      { $group: { _id: null, total: { $sum: "$price" } } }
+    ]);
+    const monthlyRevenue = monthlyRevenueAgg[0]?.total || 0;
+
+    // Last month revenue (exclude cancelled)
+    const lastMonthRevenueAgg = await Booking.aggregate([
+      {
+        $match: {
+          owner: new mongoose.Types.ObjectId(req.user),
+          status: { $ne: "cancelled" },
+          paidAt: { $gte: firstDayOfLastMonth, $lt: firstDayOfThisMonth }
+        }
+      },
+      { $group: { _id: null, total: { $sum: "$price" } } }
+    ]);
+    const lastMonthRevenue = lastMonthRevenueAgg[0]?.total || 0;
+
+    // Revenue growth percentage
+    let revenueGrowth = 0;
+    if (lastMonthRevenue > 0) {
+      revenueGrowth = ((monthlyRevenue - lastMonthRevenue) / lastMonthRevenue) * 100;
+    } else if (monthlyRevenue > 0) {
+      revenueGrowth = 100;
+    }
+
     res.json({
       totalCars,
       totalBookings,
-      pendingBookings,
+      completedBookings,
       confirmedBookings,
+      cancelledBookings,
       recentBookings,
-      monthlyRevenue: revenueAgg[0]?.total || 0,
+      monthlyRevenue,
+      lastMonthRevenue,
+      revenueGrowth,
     });
   } catch (error) {
     res.status(500).json({ error: "Server error" });

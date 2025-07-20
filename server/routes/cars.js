@@ -2,6 +2,7 @@ const express = require('express');
 const Car = require('../models/Car');
 const auth = require('../middleware/auth');
 const router = express.Router();
+const Booking = require('../models/Booking'); // Added Booking model import
 
 // Get all cars
 router.get('/', async (req, res) => {
@@ -14,6 +15,33 @@ router.get('/my-cars', auth, async (req, res) => {
   try {
     const cars = await Car.find({ owner: req.user });
     res.json(cars);
+  } catch (error) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Get available cars by location and date range
+router.get('/available', async (req, res) => {
+  try {
+    const { location, pickup, return: returnDate } = req.query;
+    if (!location || !pickup || !returnDate) {
+      return res.status(400).json({ error: 'Missing required query parameters.' });
+    }
+    // Find cars in the location
+    const carsInLocation = await Car.find({ location });
+    const carIds = carsInLocation.map(car => car._id);
+    // Find bookings that overlap with the requested date range
+    const overlappingBookings = await Booking.find({
+      car: { $in: carIds },
+      status: { $ne: 'cancelled' },
+      $or: [
+        { pickupDate: { $lte: new Date(returnDate) }, returnDate: { $gte: new Date(pickup) } }
+      ]
+    });
+    const bookedCarIds = new Set(overlappingBookings.map(b => b.car.toString()));
+    // Filter out booked cars
+    const availableCars = carsInLocation.filter(car => !bookedCarIds.has(car._id.toString()));
+    res.json(availableCars);
   } catch (error) {
     res.status(500).json({ error: 'Server error' });
   }

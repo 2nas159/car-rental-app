@@ -11,10 +11,13 @@ const Dashboard = ({ adminView = false }) => {
   const [data, setData] = useState({
     totalCars: 0,
     totalBookings: 0,
-    pendingBookings: 0,
+    completedBookings: 0,
     confirmedBookings: 0,
+    cancelledBookings: 0,
     recentBookings: [],
     monthlyRevenue: 0,
+    lastMonthRevenue: 0,
+    revenueGrowth: 0,
   });
 
   const dashboardCards = () => [
@@ -25,14 +28,19 @@ const Dashboard = ({ adminView = false }) => {
       icon: assets.listIconColored,
     },
     {
-      title: "Pending",
-      value: data.pendingBookings,
-      icon: assets.cautionIconColored,
+      title: "Completed",
+      value: data.completedBookings,
+      icon: assets.listIconColored,
     },
     {
       title: "Confirmed",
       value: data.confirmedBookings,
-      icon: assets.listIconColored,
+      icon: assets.cautionIconColored,
+    },
+    {
+      title: "Cancelled",
+      value: data.cancelledBookings,
+      icon: assets.cautionIconColored,
     },
   ];
 
@@ -61,7 +69,7 @@ const Dashboard = ({ adminView = false }) => {
       />
 
       <motion.div
-        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-8"
+        className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-6 mt-8"
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
@@ -129,8 +137,10 @@ const Dashboard = ({ adminView = false }) => {
                   <div className="text-right">
                     <p className="font-semibold text-gray-900">${booking.price}</p>
                     <span className={`text-xs px-2 py-1 rounded-full ${
-                      booking.status === 'confirmed' 
-                        ? 'bg-green-100 text-green-800' 
+                      booking.status === 'confirmed'
+                        ? 'bg-green-100 text-green-800'
+                        : booking.status === 'cancelled'
+                        ? 'bg-red-100 text-red-800'
                         : 'bg-yellow-100 text-yellow-800'
                     }`}>
                       {booking.status}
@@ -158,10 +168,22 @@ const Dashboard = ({ adminView = false }) => {
             <div className="mt-4 p-4 bg-green-50 rounded-xl">
               <div className="flex items-center justify-between">
                 <span className="text-sm text-gray-600">Revenue Growth</span>
-                <span className="text-sm font-bold text-green-600">+12.5%</span>
+                <span className={`text-sm font-bold ${data.revenueGrowth > 0 ? 'text-green-600' : data.revenueGrowth < 0 ? 'text-red-600' : 'text-gray-600'}`}>
+                  {data.revenueGrowth > 0 ? '+' : ''}
+                  {(data.revenueGrowth ?? 0).toFixed(1)}%
+                </span>
               </div>
               <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
-                <div className="bg-green-500 h-2 rounded-full" style={{ width: '75%' }}></div>
+                <div
+                  className={
+                    data.revenueGrowth > 0
+                      ? "bg-green-500 h-2 rounded-full"
+                      : data.revenueGrowth < 0
+                      ? "bg-red-500 h-2 rounded-full"
+                      : "bg-gray-400 h-2 rounded-full"
+                  }
+                  style={{ width: `${Math.min(Math.abs(data.revenueGrowth), 100)}%` }}
+                ></div>
               </div>
             </div>
           </div>

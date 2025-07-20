@@ -13,6 +13,7 @@ import ManageCars from "./pages/owner/ManageCars";
 import ManageBookings from "./pages/owner/ManageBookings";
 import Login from "./components/Login";
 import ThankYou from "./pages/ThankYou";
+import Results from "./pages/Results";
 
 function App() {
   const [showLogin, setShowLogin] = useState(false);
@@ -28,6 +29,7 @@ function App() {
         <Route path="/cars" element={<Cars />} />
         <Route path="/my-bookings" element={<MyBookings />} />
         <Route path="/thank-you" element={<ThankYou />} />
+        <Route path="/results" element={<Results />} />
         {/* Owner dashboard and features only under /owner */}
         <Route path="/owner" element={<Layout />}>
           <Route index element={<Dashboard />} />
