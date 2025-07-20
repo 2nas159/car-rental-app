@@ -52,15 +52,25 @@ const CarDetails = () => {
     const days = Math.ceil((return_d - pickup) / (1000 * 60 * 60 * 24));
     const totalPrice = days * car.pricePerDay;
 
-    const booking = {
-      car: car,
+    // Instead of setting bookingData and opening modal here, create booking first
+    const bookingPayload = {
+      car: car._id,
       pickupDate: pickup.toISOString(),
       returnDate: return_d.toISOString(),
       price: totalPrice
     };
 
-    setBookingData(booking);
-    setShowConfirmation(true);
+    setLoading(true);
+    try {
+      const response = await api.post("/bookings", bookingPayload);
+      console.log('Booking creation response:', response);
+      setBookingData(response); // response should have _id
+      setShowConfirmation(true); // Only open modal after booking is created
+    } catch (error) {
+      toast.error(error.message || "Failed to create booking");
+      console.error("Error creating booking:", error);
+    }
+    setLoading(false);
   };
 
   const handleConfirmBooking = async () => {
