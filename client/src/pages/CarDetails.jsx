@@ -74,6 +74,7 @@ const CarDetails = () => {
       };
 
       const response = await api.post("/bookings", bookingPayload);
+      console.log('Booking creation response:', response);
       const createdBooking = response;
       
       // Update bookingData with the created booking (including _id)
@@ -276,6 +277,7 @@ const CarDetails = () => {
     </div>
 
       {/* Booking Confirmation Modal */}
+      {console.log('BookingData passed to BookingConfirmationModal:', bookingData)}
       <BookingConfirmationModal
         isOpen={showConfirmation}
         onClose={() => setShowConfirmation(false)}

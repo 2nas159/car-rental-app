@@ -16,10 +16,12 @@ const PaymentFormComponent = ({ booking, onSuccess, onCancel }) => {
     // Create payment intent when component mounts
     const createPaymentIntent = async () => {
       try {
+        console.log('PaymentForm booking prop:', booking);
         const response = await api.post('/payments/create-payment-intent', {
           bookingId: booking._id,
           amount: booking.price
         });
+        console.log('Payment intent response:', response);
         setClientSecret(response.clientSecret);
       } catch (error) {
         toast.error('Failed to initialize payment');
