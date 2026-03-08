@@ -137,4 +137,4 @@ This project is licensed under the ISC License.
 
 ---
 
-_Built with ❤️ by your development team._
+_Built with ❤️ by ömer aktay._
