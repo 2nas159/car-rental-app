@@ -19,13 +19,13 @@ const BookingConfirmationModal = ({
   const currency = import.meta.env.VITE_CURRENCY || "$";
   const days = Math.ceil(
     (new Date(booking.returnDate) - new Date(booking.pickupDate)) /
-      (1000 * 60 * 60 * 24)
+      (1000 * 60 * 60 * 24),
   );
 
   const handlePaymentSuccess = () => {
     setShowPayment(false);
     onConfirm(); // This should NOT re-create the booking, just close the modal and reset state
-    navigate('/thank-you');
+    navigate("/thank-you");
   };
 
   const handlePaymentCancel = () => {
@@ -38,7 +38,7 @@ const BookingConfirmationModal = ({
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+        className="fixed inset-0 backdrop-blur-md bg-black/20 flex items-center justify-center z-50 p-4"
         onClick={onClose}
       >
         <motion.div
@@ -149,7 +149,7 @@ const BookingConfirmationModal = ({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+            className="fixed inset-0 backdrop-blur-md bg-black/20 flex items-center justify-center z-50 p-4"
             onClick={handlePaymentCancel}
           >
             <motion.div

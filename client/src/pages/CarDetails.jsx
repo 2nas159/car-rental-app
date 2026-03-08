@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useContext } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { assets } from "../assets/assets";
 import Loader from "../components/Loader";
@@ -24,7 +24,7 @@ const CarDetails = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!user) {
       toast.error("Please login to book a car");
       return;
@@ -57,13 +57,13 @@ const CarDetails = () => {
       car: car._id,
       pickupDate: pickup.toISOString(),
       returnDate: return_d.toISOString(),
-      price: totalPrice
+      price: totalPrice,
     };
 
     setLoading(true);
     try {
       const response = await api.post("/bookings", bookingPayload);
-      console.log('Booking creation response:', response);
+      console.log("Booking creation response:", response);
       // Fetch the full booking with populated car
       const fullBooking = await api.get(`/bookings/${response._id}`);
       setBookingData(fullBooking);
@@ -79,8 +79,8 @@ const CarDetails = () => {
     // This function should only be used for booking creation, not after payment
     setShowConfirmation(false); // Close the modal after payment
     setBookingData(null); // Reset booking data
-    if (typeof window !== 'undefined' && window.toast) {
-      window.toast.success('Booking and payment successful!');
+    if (typeof window !== "undefined" && window.toast) {
+      window.toast.success("Booking and payment successful!");
     }
   };
 
@@ -89,7 +89,9 @@ const CarDetails = () => {
       try {
         const response = await api.get(`/cars/${id}`);
         // Handle both array and object response formats
-        const carData = Array.isArray(response) ? response[0] : (response.data || response);
+        const carData = Array.isArray(response)
+          ? response[0]
+          : response.data || response;
         setCar(carData);
       } catch (error) {
         toast.error("Failed to load car details");
@@ -100,11 +102,13 @@ const CarDetails = () => {
     const fetchBookedDates = async () => {
       try {
         const res = await api.get(`/bookings/booked-dates/${id}`);
-        setBookedRanges(res.map(b => ({
-          start: new Date(b.pickupDate),
-          end: new Date(b.returnDate)
-        })));
-      } catch (err) {
+        setBookedRanges(
+          res.map((b) => ({
+            start: new Date(b.pickupDate),
+            end: new Date(b.returnDate),
+          })),
+        );
+      } catch {
         setBookedRanges([]);
       }
     };
@@ -118,161 +122,195 @@ const CarDetails = () => {
   return car ? (
     <>
       <div className="px-6 md:px-16 lg:px-24 xl:px-32 mt-16 mb-16">
-      <button
-        onClick={() => navigate(-1)}
-        className="flex items-center gap-2 mb-6 text-gray-500 cursor-pointer"
-      >
-        <img src={assets.arrow_icon} alt="" className="rotate-180 opacity-65" />
-        Back to all cars
-      </button>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-12">
-        {/* Left: Car Image & Details */}
-        <div className="lg:col-span-2">
+        <button
+          onClick={() => navigate(-1)}
+          className="flex items-center gap-2 mb-6 text-gray-500 cursor-pointer"
+        >
           <img
-            src={car.image}
-            alt="car"
-            className="w-full h-auto md:max-h-100 object-cover rounded-xl mb-6 shadow-md"
+            src={assets.arrow_icon}
+            alt=""
+            className="rotate-180 opacity-65"
           />
-          <div className="space-y-6">
-            <div>
-              <h1 className="text-3xl font-bold">
-                {car.brand} {car.model}
-              </h1>
-              <p>
-                {car.category} . {car.year}
-              </p>
+          Back to all cars
+        </button>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-12">
+          {/* Left: Car Image & Details */}
+          <div className="lg:col-span-2">
+            <img
+              src={car.image}
+              alt="car"
+              className="w-full h-auto md:max-h-100 object-cover rounded-xl mb-6 shadow-md"
+            />
+            <div className="space-y-6">
+              <div>
+                <h1 className="text-3xl font-bold">
+                  {car.brand} {car.model}
+                </h1>
+                <p>
+                  {car.category} . {car.year}
+                </p>
+              </div>
+              <hr className="border-borderColor my-6" />
+
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                {[
+                  { icon: assets.fuel_icon, text: car.fuel_type },
+                  { icon: assets.car_icon, text: car.transmission },
+                  { icon: assets.location_icon, text: car.location },
+                  {
+                    icon: assets.users_icon,
+                    text: `${car.seating_capacity} Seats`,
+                  },
+                ].map(({ icon, text }) => (
+                  <div
+                    key={text}
+                    className="flex flex-col items-center bg-light p-4 rounded-lg shadow-sm"
+                  >
+                    <img
+                      src={icon}
+                      alt="icon"
+                      className="h-5 mb-2 opacity-70"
+                    />
+                    <span className="text-sm font-medium text-gray-700">
+                      {text}
+                    </span>
+                  </div>
+                ))}
+              </div>
+
+              {/* Description */}
+              <div>
+                <h1 className="text-xl font-medium mb-3">Description</h1>
+                <p className="text-gray-500">{car.description}</p>
+              </div>
+
+              {/* Features */}
+              <div>
+                <h1 className="text-xl font-medium mb-3">Features</h1>
+                <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {[
+                    "360 Camera",
+                    "Bluetooth",
+                    "GPS",
+                    "Heated Seats",
+                    "Rear View Mirror",
+                  ].map((item) => (
+                    <li key={item} className="flex items-center text-gray-500">
+                      <img
+                        src={assets.check_icon}
+                        alt="check-icon"
+                        className="h-4 mr-2"
+                      />
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+              </div>
             </div>
+          </div>
+          {/* Right: Booking Form */}
+          <form
+            onSubmit={handleSubmit}
+            className="shadow-lg h-max sticky top-18 rounded-xl p-6 space-y-6 text-gray-500"
+          >
+            <p className="flex items-center justify-between text-2xl text-gray-800 font-semibold">
+              {currency}
+              {car.pricePerDay}
+              <span className="text-base text-gray-400 font-normal">
+                per day
+              </span>
+            </p>
+
             <hr className="border-borderColor my-6" />
 
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-              {[
-                { icon: assets.users_icon, text: car.fuel_type },
-                { icon: assets.users_icon, text: car.transmission },
-                { icon: assets.users_icon, text: car.location },
-              ].map(({ icon, text }) => (
-                <div
-                  key={text}
-                  className="flex flex-col items-center bg-light p-4 rounded-lg"
-                >
-                  <img src={icon} alt="icon" className="h-5 mb-2" />
-                  {text}
+            <div className="flex flex-col gap-2">
+              <label htmlFor="pickup-date">Pickup Date</label>
+              <DatePicker
+                selected={pickupDate ? new Date(pickupDate) : null}
+                onChange={(date) =>
+                  setPickupDate(date ? date.toISOString().split("T")[0] : "")
+                }
+                excludeDateIntervals={bookedRanges}
+                minDate={new Date()}
+                placeholderText="Select pickup date"
+                dateFormat="yyyy-MM-dd"
+                className="border border-borderColor px-3 py-2 rounded-lg"
+                required
+                id="pickup-date"
+              />
+            </div>
+            <div className="flex flex-col gap-2">
+              <label htmlFor="return-date">Return Date</label>
+              <DatePicker
+                selected={returnDate ? new Date(returnDate) : null}
+                onChange={(date) =>
+                  setReturnDate(date ? date.toISOString().split("T")[0] : "")
+                }
+                excludeDateIntervals={bookedRanges}
+                minDate={pickupDate ? new Date(pickupDate) : new Date()}
+                placeholderText="Select return date"
+                dateFormat="yyyy-MM-dd"
+                className="border border-borderColor px-3 py-2 rounded-lg"
+                required
+                id="return-date"
+              />
+            </div>
+
+            {/* Total Price Calculation */}
+            {pickupDate && returnDate && (
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <div className="flex justify-between items-center mb-2">
+                  <span>Duration:</span>
+                  <span className="font-semibold">
+                    {Math.ceil(
+                      (new Date(returnDate) - new Date(pickupDate)) /
+                        (1000 * 60 * 60 * 24),
+                    )}{" "}
+                    days
+                  </span>
                 </div>
-              ))}
-            </div>
+                <div className="flex justify-between items-center text-lg font-bold text-primary">
+                  <span>Total Price:</span>
+                  <span>
+                    {currency}
+                    {Math.ceil(
+                      (new Date(returnDate) - new Date(pickupDate)) /
+                        (1000 * 60 * 60 * 24),
+                    ) * car.pricePerDay}
+                  </span>
+                </div>
+              </div>
+            )}
 
-            {/* Description */}
-            <div>
-              <h1 className="text-xl font-medium mb-3">Description</h1>
-              <p className="text-gray-500">{car.description}</p>
-            </div>
+            <button
+              type="submit"
+              disabled={loading || !user}
+              className={`w-full py-3 font-medium text-white rounded-xl cursor-pointer transition-all ${
+                loading || !user
+                  ? "bg-gray-400 cursor-not-allowed"
+                  : "bg-primary hover:bg-primary-dull"
+              }`}
+            >
+              {loading
+                ? "Creating Booking..."
+                : !user
+                ? "Login to Book"
+                : "Book Now"}
+            </button>
 
-            {/* Features */}
-            <div>
-              <h1 className="text-xl font-medium mb-3">Features</h1>
-              <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                {[
-                  "360 Camera",
-                  "Bluetooth",
-                  "GPS",
-                  "Heated Seats",
-                  "Rear View Mirror",
-                ].map((item) => (
-                  <li key={item} className="flex items-center text-gray-500">
-                    <img
-                      src={assets.check_icon}
-                      alt="check-icon"
-                      className="h-4 mr-2"
-                    />
-                    {item}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
+            <p className="text-center text-sm">
+              {!user ? "Please login to book this car" : ""}
+            </p>
+          </form>
         </div>
-        {/* Right: Booking Form */}
-        <form
-          onSubmit={handleSubmit}
-          className="shadow-lg h-max sticky top-18 rounded-xl p-6 space-y-6 text-gray-500"
-        >
-          <p className="flex items-center justify-between text-2xl text-gray-800 font-semibold">
-            {currency}
-            {car.pricePerDay}
-            <span className="text-base text-gray-400 font-normal">per day</span>
-          </p>
-
-          <hr className="border-borderColor my-6" />
-
-          <div className="flex flex-col gap-2">
-            <label htmlFor="pickup-date">Pickup Date</label>
-            <DatePicker
-              selected={pickupDate ? new Date(pickupDate) : null}
-              onChange={date => setPickupDate(date ? date.toISOString().split("T")[0] : "")}
-              excludeDateIntervals={bookedRanges}
-              minDate={new Date()}
-              placeholderText="Select pickup date"
-              dateFormat="yyyy-MM-dd"
-              className="border border-borderColor px-3 py-2 rounded-lg"
-              required
-              id="pickup-date"
-            />
-          </div>
-          <div className="flex flex-col gap-2">
-            <label htmlFor="return-date">Return Date</label>
-            <DatePicker
-              selected={returnDate ? new Date(returnDate) : null}
-              onChange={date => setReturnDate(date ? date.toISOString().split("T")[0] : "")}
-              excludeDateIntervals={bookedRanges}
-              minDate={pickupDate ? new Date(pickupDate) : new Date()}
-              placeholderText="Select return date"
-              dateFormat="yyyy-MM-dd"
-              className="border border-borderColor px-3 py-2 rounded-lg"
-              required
-              id="return-date"
-            />
-          </div>
-
-          {/* Total Price Calculation */}
-          {pickupDate && returnDate && (
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <div className="flex justify-between items-center mb-2">
-                <span>Duration:</span>
-                <span className="font-semibold">
-                  {Math.ceil((new Date(returnDate) - new Date(pickupDate)) / (1000 * 60 * 60 * 24))} days
-                </span>
-              </div>
-              <div className="flex justify-between items-center text-lg font-bold text-primary">
-                <span>Total Price:</span>
-                <span>
-                  {currency}
-                  {Math.ceil((new Date(returnDate) - new Date(pickupDate)) / (1000 * 60 * 60 * 24)) * car.pricePerDay}
-                </span>
-              </div>
-            </div>
-          )}
-
-          <button 
-            type="submit"
-            disabled={loading || !user}
-            className={`w-full py-3 font-medium text-white rounded-xl cursor-pointer transition-all ${
-              loading || !user 
-                ? 'bg-gray-400 cursor-not-allowed' 
-                : 'bg-primary hover:bg-primary-dull'
-            }`}
-          >
-            {loading ? "Creating Booking..." : !user ? "Login to Book" : "Book Now"}
-          </button>
-
-          <p className="text-center text-sm">
-            {!user ? "Please login to book this car" : ""}
-          </p>
-        </form>
       </div>
-    </div>
 
       {/* Booking Confirmation Modal */}
-      {console.log('BookingData passed to BookingConfirmationModal:', bookingData)}
+      {console.log(
+        "BookingData passed to BookingConfirmationModal:",
+        bookingData,
+      )}
       <BookingConfirmationModal
         isOpen={showConfirmation}
         onClose={() => setShowConfirmation(false)}

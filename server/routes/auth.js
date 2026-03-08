@@ -37,14 +37,11 @@ router.post("/register", async (req, res) => {
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
       expiresIn: "1d",
     });
+    const userObj = user.toObject();
+    delete userObj.password;
     res.json({
       token,
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-      },
+      user: userObj,
     });
   } catch (err) {
     res.status(500).json({ error: "Server error" });
@@ -65,14 +62,11 @@ router.post("/login", loginLimiter, async (req, res) => {
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
       expiresIn: "1d",
     });
+    const userObj = user.toObject();
+    delete userObj.password;
     res.json({
       token,
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-      },
+      user: userObj,
     });
   } catch (err) {
     res.status(500).json({ error: "Server error" });

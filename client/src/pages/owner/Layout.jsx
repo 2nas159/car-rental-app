@@ -5,11 +5,13 @@ import { Outlet } from "react-router-dom";
 
 const Layout = () => {
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col min-h-screen">
       <NavbarOwner />
-      <div className="flex">
+      <div className="flex flex-1 pb-16 md:pb-0">
         <Sidebar />
-        <Outlet />
+        <main className="flex-1 overflow-x-hidden">
+          <Outlet />
+        </main>
       </div>
     </div>
   );
