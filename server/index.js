@@ -25,6 +25,12 @@ app.use('/api/upload', uploadRoutes);
 
 app.get('/', (req, res) => res.send('API Running'));
 
+// Global error handler
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({ error: err.message || 'Server error' });
+});
+
 // For local development only:
 if (process.env.NODE_ENV !== 'production') {
   const PORT = process.env.PORT || 5000;
